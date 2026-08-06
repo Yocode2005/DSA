@@ -1,110 +1,106 @@
-class DisjointSet {
-    vector<int> parent, size;
-
-public:
-    DisjointSet(int n) {
-        parent.resize(n);
-        size.resize(n, 1);
-
-        for (int i = 0; i < n; i++)
-            parent[i] = i;
-    }
-
-    // Find the ultimate parent (with path compression)
-    int findUPar(int node) {
-        if (node == parent[node])
-            return node;
-
-        return parent[node] = findUPar(parent[node]);
-    }
-
-    // Union by size
-    void unionBySize(int u, int v) {
-
-        int pu = findUPar(u);
-        int pv = findUPar(v);
-
-        if (pu == pv)
-            return;
-
-        if (size[pu] < size[pv]) {
-            parent[pu] = pv;
-            size[pv] += size[pu];
-        }
-        else {
-            parent[pv] = pu;
-            size[pu] += size[pv];
-        }
-    }
-};
-
 class Solution {
 public:
     int swimInWater(vector<vector<int>>& grid) {
 
+        // Size of the square grid
         int n = grid.size();
 
-        // Total number of nodes
-        DisjointSet ds(n * n);
+        // Directions for moving Up, Right, Down, Left
+        vector<pair<int,int>> dir = {
+            {-1,0},
+            {0,1},
+            {1,0},
+            {0,-1}
+        };
 
         /*
-            pos[value] = {row,col}
+            Priority Queue (Min Heap)
 
-            Since every value appears exactly once,
-            we can directly know which cell becomes
-            active at every time.
+            Stores:
+            {time required to reach this cell,
+             {row, column}}
+
+            We always process the cell having
+            the minimum required time first.
         */
-        vector<pair<int,int>> pos(n * n);
+        priority_queue<
+            pair<int,pair<int,int>>,
+            vector<pair<int,pair<int,int>>>,
+            greater<pair<int,pair<int,int>>>
+        > pq;
 
-        for(int i = 0; i < n; i++) {
-            for(int j = 0; j < n; j++) {
-                pos[grid[i][j]] = {i, j};
-            }
-        }
+        /*
+            visited[r][c] tells whether we have already
+            inserted this cell into the priority queue.
 
-        // Keeps track of cells that are underwater no more.
-        vector<vector<bool>> active(n, vector<bool>(n, false));
+            Since the first time we push a cell into the
+            min heap is with its minimum possible time,
+            we don't need to process it again.
+        */
+        vector<vector<bool>> visited(n, vector<bool>(n,false));
 
-        // Directions
-        int dr[] = {-1, 0, 1, 0};
-        int dc[] = {0, 1, 0, -1};
+        // Start from top-left corner.
+        // Initial time equals its elevation.
+        pq.push({grid[0][0], {0,0}});
+        visited[0][0] = true;
 
-        // Increase water level gradually
-        for(int time = 0; time < n * n; time++) {
+        while(!pq.empty()){
 
-            // Cell whose elevation equals current water level
-            auto [row, col] = pos[time];
+            // Cell having minimum current required time
+            auto current = pq.top();
+            pq.pop();
 
-            // This cell is now accessible
-            active[row][col] = true;
+            int time = current.first;
+            int row = current.second.first;
+            int col = current.second.second;
 
-            int node = row * n + col;
+            // Destination reached
+            // Since this is Dijkstra,
+            // first time reaching destination is optimal.
+            if(row == n-1 && col == n-1)
+                return time;
 
-            // Check all four neighbours
-            for(int k = 0; k < 4; k++) {
+            // Explore all 4 neighbours
+            for(auto d : dir){
 
-                int nr = row + dr[k];
-                int nc = col + dc[k];
+                int newRow = row + d.first;
+                int newCol = col + d.second;
 
-                // Skip outside grid
-                if(nr < 0 || nr >= n || nc < 0 || nc >= n)
+                // Skip if outside the grid
+                if(newRow < 0 || newCol < 0 ||
+                   newRow >= n || newCol >= n)
                     continue;
 
-                // Union only with already active neighbours
-                if(active[nr][nc]) {
+                // Skip already visited cells
+                if(visited[newRow][newCol])
+                    continue;
 
-                    int adjNode = nr * n + nc;
+                /*
+                    Time needed to enter neighbour
 
-                    ds.unionBySize(node, adjNode);
-                }
+                    Current path already needs 'time'.
+
+                    If neighbour's elevation is higher,
+                    we must wait until that level.
+
+                    Therefore
+
+                    newTime =
+                    max(current path time,
+                        neighbour elevation)
+                */
+                int newTime = max(time, grid[newRow][newCol]);
+
+                // Push neighbour into min heap
+                pq.push({newTime, {newRow,newCol}});
+
+                // Mark visited
+                visited[newRow][newCol] = true;
             }
-
-            // If start and end belong to same component,
-            // answer is current time.
-            if(ds.findUPar(0) == ds.findUPar(n * n - 1))
-                return time;
         }
 
+        // Problem guarantees an answer,
+        // so this line is never reached.
         return -1;
     }
 };
