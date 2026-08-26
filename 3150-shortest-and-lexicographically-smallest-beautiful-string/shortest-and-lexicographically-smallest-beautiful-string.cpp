@@ -1,32 +1,42 @@
 class Solution {
 public:
     string shortestBeautifulSubstring(string s, int k) {
-        int n = s.length();
+        int n = s.size();
 
-        for (int len = k; len <= n; len++) {
+        int left = 0;
+        int ones = 0;
 
-            string result = "";
+        string ans = "";
 
-            for (int start = 0; start <= n - len; start++) {
+        for (int right = 0; right < n; right++) {
 
-                string temp = s.substr(start, len);
+            if (s[right] == '1')
+                ones++;
 
-                int cnt = count(temp.begin(), temp.end(), '1');
+            while (ones > k) {
+                if (s[left] == '1')
+                    ones--;
 
-                if (cnt == k) {
-
-                    if (result.empty() || temp < result) {
-                        result = temp;
-                    }
-                }
+                left++;
             }
 
-            // First valid length = shortest length
-            if (!result.empty()) {
-                return result;
+            if (ones == k) {
+
+                // Remove leading zeros
+                while (left < right && s[left] == '0')
+                    left++;
+
+                string curr = s.substr(left, right - left + 1);
+
+                if (ans.empty() ||
+                    curr.length() < ans.length() ||
+                    (curr.length() == ans.length() && curr < ans)) {
+
+                    ans = curr;
+                }
             }
         }
 
-        return "";
+        return ans;
     }
 };
