@@ -34,7 +34,7 @@
 //         return solve(n - 1, m - 1, obstacleGrid,dp);
 //     }
 // };
-
+// tabulation solution
 class Solution {
 public:
     int uniquePathsWithObstacles(vector<vector<int>>& obstacleGrid) {
@@ -44,42 +44,31 @@ public:
 
         vector<vector<int>> dp(n, vector<int>(m, 0));
 
-        // Starting cell
-        if(obstacleGrid[0][0] == 1)
-            return 0;
+        for(int i = 0; i < n; i++) {
+            for(int j = 0; j < m; j++) {
 
-        dp[0][0] = 1;
-
-        // First column
-        for(int i = 1; i < n; i++) {
-
-            if(obstacleGrid[i][0] == 0) {
-                dp[i][0] = dp[i-1][0];
-            }
-        }
-
-        // First row
-        for(int j = 1; j < m; j++) {
-
-            if(obstacleGrid[0][j] == 0) {
-                dp[0][j] = dp[0][j-1];
-            }
-        }
-
-        // Remaining cells
-        for(int i = 1; i < n; i++) {
-
-            for(int j = 1; j < m; j++) {
-
-                // If obstacle, no path
+                // If current cell is an obstacle,
+                // there are 0 ways to reach it.
                 if(obstacleGrid[i][j] == 1) {
                     dp[i][j] = 0;
                 }
-                else {
-                    int left = dp[i][j-1];
-                    int up = dp[i-1][j];
 
-                    dp[i][j] = left + up;
+                // Starting cell
+                else if(i == 0 && j == 0) {
+                    dp[i][j] = 1;
+                }
+
+                else {
+                    int up = 0;
+                    int left = 0;
+
+                    if(i > 0)
+                        up = dp[i-1][j];
+
+                    if(j > 0)
+                        left = dp[i][j-1];
+
+                    dp[i][j] = up + left;
                 }
             }
         }
